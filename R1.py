@@ -1,70 +1,72 @@
 import RPi.GPIO as GPIO
 import time
-from Sonic import UltraSonic
+import datetime
+from dateutil import relativedelta
+from ultra_sonic import setup as ultrasetup
+from ultra_sonic import destroy as ultradestroy
+from ultra_sonic import getSonar
+from ultra_sonic import pulseIn
 
 motorLFPin = 35 #----(ML)---- left fwd motor
 motorRFPin = 37 #----(MR)---- right fwd motor
 motorLRPin = 38 #----(ML)---- left rev motor
 motorRRPin = 40 #----(MR)---- right rev motor
-#ledPin = 11   #-----|LED>------
-#sensorTrgPin = 18 # this is outpin _|-|_
-#sensorEchoPin = 16  # this is input____|-----|____
+
 PCT_DUTY_CYCLE = 0.5
 FWD = 1  # move fwd
 REV = 2  # move rev
 LEFT = 3  # left
 RIGHT = 4  # right
 D_MIN = 15 # this is min distance in cms bot should  check
-TURN_ANGLE = 10 # DEGREES  how to convert radians to linear?? pi * D 
-TIME_OUT = 10
+TURN_ANGLE = 30 # DEGREES  how to convert radians to linear?? pi * D 
+TIME_OUT = 2  # in minutes
 
 def setup():
-    global distance, p_fwd, p_rev
+    # global distance, p_fwd, p_rev
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(motorLFPin, GPIO.OUT) # left motor fwd
     GPIO.setup(motorRFPin, GPIO.OUT) # Right motor fwd
     GPIO.setup(motorLRPin, GPIO.OUT) # left motor rev
     GPIO.setup(motorRRPin, GPIO.OUT) # right motor rev
-    UltraSonic.setup()
+    ultrasetup()
 
 
 def loop():
 #    d = measureIt()
     
-    distance = UltraSonic.getSonar()
+    distance = getSonar()
     while True:
         #senseIt()  # can we split this into two sections 1) sensor 2) measurement?
           # need check for back side as well to avoid failure
 #        distance = next(d)
         print("Distance from object is %d" %(distance))
         if (distance > D_MIN):
-            distance = moveFwd(distance, 1)
+            distance = getSonar()
             print("Distance from object is %d" %(distance))
             time.sleep(1)
         elif (distance<= D_MIN):
             stop()
+            cum_min = 0
             while True:
-                time1 = time.time()
-                print("Started clock %.3f" %(time1))
+                time1 = datetime.datetime.now()
+#                print("Started clock %.3f" %(time1))
                 safeR = checkDirection(RIGHT, TURN_ANGLE)
+                
                 safeL = safeR or checkDirection(LEFT, TURN_ANGLE)
-                time2 = time1 + time,time()
-                print("Cummulative Time : %.3f" %(time2))
-                if (TIME_OUT>=time2):
+                print("LEFT : %s RIGHT: %s"%(safeR, safeL))
+                time2 = time1 = datetime.datetime.now()
+                diff = relativedelta.relativedelta(time2, time1)
+                cum_min += diff.minutes
+#                print("Time in Minutes : %.3f" %(timeinmin))
+                if (TIME_OUT>=cum_min):
                     print("We are stalled")
+                    destroy()
+                    ultradestroy()
                     exit(1)
                 if safeR or safeL:
+                    print("Breaking Direction Check and resuming the travel")
                     break
-                
-        #takeCall()
-            
-        
-#def measureIt():
-#    # this will measure distance of an object and should return the distance d
-#    for i in list(range(10, -1, -1)):
-#        moveit(FWD, 1)
-#        yield int(i)
-    
+
 def moveFwd(distance, steps):
     #if (distance -D_MIN <=0):
     #   return
@@ -85,22 +87,23 @@ def checkDirection(dirextion, degrees):
     ## measure distance between object and machine
     # turn motor 1 to right and motor 2 left by few degree??
     moveit(dirextion, degrees)
-    d = UltraSonic.getSonar()
+    d = getSonar()
+    print("Direction : %s Turning : %d Degrees" %(dirextion, degrees))
     if ( d > D_MIN):
         return True
     else:
         return False
 
 def moveit(direction, degrees):
+    print("motor should turn to direction %s by %d degrees"%(direction, degrees))
     if (direction== RIGHT):
-        # motor should turn right
+#        pring("motor should turn right")
         GPIO.output(motorRFPin, GPIO.LOW)
         GPIO.output(motorRRPin, GPIO.HIGH)
         GPIO.output(motorLFPin, GPIO.HIGH)
-        GPIO.output(motorLRPin, GPIO.LOW)
+        GPIO.output(motorLRPin, GPIO.LOW)        
         time.sleep(1)
     elif (direction== LEFT):
-        # motor should turn LEFT
         GPIO.output(motorRFPin, GPIO.HIGH)
         GPIO.output(motorRRPin, GPIO.LOW)
         GPIO.output(motorLFPin, GPIO.LOW)
@@ -118,7 +121,8 @@ def moveit(direction, degrees):
         GPIO.output(motorLFPin, GPIO.LOW)
         GPIO.output(motorLRPin, GPIO.HIGH)
         time.sleep(1)
- 
+#     distance = getSonar()
+     
 def destroy():
     # pulling all outputs to low and cleaning it up
     GPIO.output(motorLFPin, GPIO.LOW) # left motor fwd
@@ -126,12 +130,13 @@ def destroy():
     GPIO.output(motorLRPin, GPIO.LOW) # left motor rev
     GPIO.output(motorRRPin, GPIO.LOW) # right motor rev    
 
-    UltraSonic.destroy()
+    ultradestroy()
     GPIO.cleanup()
 
 
 if __name__=='__main__':
     setup()
+    ultrasetup()
     try:
         loop()
     except KeyboardInterrupt:
