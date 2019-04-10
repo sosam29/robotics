@@ -52,7 +52,8 @@ def loop():
 #                print("Started clock %.3f" %(time1))
                 safeR = checkDirection(RIGHT, TURN_ANGLE)
                 
-                safeL = safeR or checkDirection(LEFT, TURN_ANGLE)
+                safeL = checkDirection(LEFT, TURN_ANGLE)
+
                 print("LEFT : %s RIGHT: %s"%(safeR, safeL))
                 time2 = time1 = datetime.datetime.now()
                 diff = relativedelta.relativedelta(time2, time1)
@@ -74,7 +75,9 @@ def moveFwd(distance, steps):
     return retval
  
 def stop():
-    #destroy() # should stop the motors
+    ''' stop all movmemnts and stand still
+    '''
+    print("Standing still...")
     GPIO.output(motorLFPin, GPIO.LOW) # left motor fwd
     GPIO.output(motorRFPin, GPIO.LOW) # Right motor fwd
     GPIO.output(motorLRPin, GPIO.LOW) # left motor rev
@@ -86,7 +89,7 @@ def checkDirection(dirextion, degrees):
 #    safe = False
     ## measure distance between object and machine
     # turn motor 1 to right and motor 2 left by few degree??
-    moveit(dirextion, degrees)
+    moveit(dirextion, True)
     d = getSonar()
     print("Direction : %s Turning : %d Degrees" %(dirextion, degrees))
     if ( d > D_MIN):
@@ -94,34 +97,41 @@ def checkDirection(dirextion, degrees):
     else:
         return False
 
-def moveit(direction, degrees):
-    print("motor should turn to direction %s by %d degrees"%(direction, degrees))
+def moveit(direction, directioncheck):
+    ''' we should be checking only the way and not making any progress
+        we should be only turning head and whole body
+    '''
+    print("motor should turn to direction %s "%(direction))
     if (direction== RIGHT):
 #        pring("motor should turn right")
         GPIO.output(motorRFPin, GPIO.LOW)
         GPIO.output(motorRRPin, GPIO.HIGH)
         GPIO.output(motorLFPin, GPIO.HIGH)
         GPIO.output(motorLRPin, GPIO.LOW)        
-        time.sleep(1)
+        # time.sleep(directioncheck)
+        
     elif (direction== LEFT):
         GPIO.output(motorRFPin, GPIO.HIGH)
         GPIO.output(motorRRPin, GPIO.LOW)
         GPIO.output(motorLFPin, GPIO.LOW)
         GPIO.output(motorLRPin, GPIO.HIGH)
-        time.sleep(1)
+        # time.sleep(directioncheck)
+
     elif(direction== FWD):   # FWD    
         GPIO.output(motorRFPin, GPIO.HIGH)
         GPIO.output(motorRRPin, GPIO.LOW)
         GPIO.output(motorLFPin, GPIO.HIGH)
         GPIO.output(motorLRPin, GPIO.LOW)
-        time.sleep(1)
+        # time.sleep(1)
+
     elif(direction== REV):   # REV    
         GPIO.output(motorRFPin, GPIO.LOW)
         GPIO.output(motorRRPin, GPIO.HIGH)
         GPIO.output(motorLFPin, GPIO.LOW)
         GPIO.output(motorLRPin, GPIO.HIGH)
         time.sleep(1)
-#     distance = getSonar()
+        if (directioncheck or direction == REV) :
+            stop()
      
 def destroy():
     # pulling all outputs to low and cleaning it up

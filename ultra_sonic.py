@@ -1,6 +1,8 @@
 import RPi.GPIO as GPIO
 import time
-
+''' it is anticipated that callee is doing setup and this file will be doing only distance measurement sn
+     returns to called the distance 
+'''
 echoPin = 18
 trigerPin = 16
 MAX_DIST = 500 # cm
@@ -12,7 +14,7 @@ def pulseIn(pin, level, TO):
     while (GPIO.input(pin) != level):
         if((time.time() - t0) > TO *0.000001):
             return 0
-    
+
     t0=time.time()
     
     while (GPIO.input(pin)==level):
@@ -24,7 +26,7 @@ def pulseIn(pin, level, TO):
 def getSonar():
 #    print("Probing")
     distances =[]
-    for i in range(0,100):
+    for _ in range(0,100):
         GPIO.output(trigerPin, GPIO.HIGH)
         time.sleep(.00001) # 10 microsec
         GPIO.output(trigerPin, GPIO.LOW)
@@ -39,7 +41,7 @@ def getSonar():
     return distance
             
 def setup():
-    GPIO.setmode(GPIO.BOARD)
+#     GPIO.setmode(GPIO.BOARD) disabling the setup as we are doing it in called function
     GPIO.setup(trigerPin, GPIO.OUT)
     GPIO.setup(echoPin, GPIO.IN)
     
@@ -48,7 +50,7 @@ def loop():
 #    GPIO.setup(11,GPIO.IN)
     while True:
         distances =[]
-        for j in range(0,100):
+        for _ in range(0,100):
             d1 = getSonar()
             distances.append(d1)
 #            print("current Iteration %d"%(j))
@@ -62,7 +64,7 @@ def loop():
         time.sleep(1)
 
 def destroy():
-    GPIO.cleanup()
+    GPIO.cleanup()  # do we need this?
 #    GPIO.output(trigerPin, GPIO.LOW)
     print("In destroy() cleaning up")
     
