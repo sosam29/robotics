@@ -8,10 +8,9 @@ triggerPin = 16
 MAX_DIST = 500 # cm
 TIME_OUT_PEEK= MAX_DIST * 60 # 220 * 60 = 13200 microseconds
 
-def setup():
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(triggerPin, GPIO.OUT)
-    GPIO.setup(echoPin, GPIO.IN)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(triggerPin, GPIO.OUT)
+GPIO.setup(echoPin, GPIO.IN)
 
 
 def pulseIn(pin, level, TO):
@@ -49,31 +48,24 @@ def getDistance():
 def destroy():
     print("cleaning things up")
     GPIO.cleanup()
-    capture.release()
-    cv.destroyAllWindows()
 
-def loop():
-    capture = cv.VideoCapture(0)
-    capture2 = cv.VideoCapture(1)
-    while True:
-        
-        d = getDistance()
-        print("Distance is %.2f cm"%(d))
-        ret, frame = capture.read()
-        ret1, frame1 = capture2.read()
+capture = cv.VideoCapture(0)
+capture2 = cv.VideoCapture(1)
+while True:
+    d = getDistance()
+    print("Distance is %.2f cm"%(d))
+    ret, frame = capture.read()
+    ret1, frame1 = capture2.read()
 
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        cv.imshow("grayed" , gray)
-        cv.imshow("color",frame1)
-        time.sleep(1)
-        # c = cv.waitKey(0)
-        # if 'q'==chr (c & 255):
-        #     destroy()
-        #     break
-
-if __name__ =="__main__":
-    setup()
-    try:
-        loop()
-    except KeyboardInterrupt:
+    # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    cv.imshow("left" , frame)
+    cv.imshow("right",frame1)
+    cv.imwrite("left.jpg", frame1)
+    cv.imwrite("right.jpg", frame)
+    c = cv.waitKey(0)
+    if 'q'==chr (c & 255):
         destroy()
+        break
+
+capture.release()
+cv.destroyAllWindows()
