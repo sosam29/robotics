@@ -6,13 +6,24 @@ class Sticher:
     def __init__(self):
         self.iscv3 = imutils.is_cv3(or_better = True)
 
-    def stich(self, images, ratio=0.75, reProjThreshold= 4.0, showMatches= False):
+    def frange(start, stop, step):
+        i = start
+        while i < stop:
+            yield i
+            i+= step
+
+    def stich(self, images, ratio=0.50 ,reProjThreshold= 4.0, showMatches= False):
         (imageB, imageA)= images
         (kpsA,featuresA) = self.detectAndDescribe(imageA)
         (kpsB,featuresB) = self.detectAndDescribe(imageB)
-
-        M= self.matchKeypoints(kpsA, kpsB, featuresA, featuresB, ratio, reProjThreshold )
-
+        for i in frange(0.01 ,1, .001):
+            print(i)
+            M= self.matchKeypoints(kpsA, kpsB, featuresA, featuresB, i, reProjThreshold )
+            if M is not None:
+                break
+            else:
+                print("nothing to stich")
+                return None
         if M is None:
             return None
         (matches,H, status) = M
@@ -42,7 +53,7 @@ class Sticher:
     
     def matchKeypoints(self, kpsA, kpsB, featuresA, featuresB, ratio, reProjThresh):
         matcher = cv2.DescriptorMatcher_create("BruteForce")
-        rowMatches = matcher.knnMAtch(featuresA, featuresB, 2)
+        rowMatches = matcher.knnMatch(featuresA, featuresB, 2)
         matches=[]
 
         for m in rowMatches:
@@ -75,8 +86,8 @@ class Sticher:
 
 if __name__ =="__main__":
     
-    imgl= '/home/pi/examples/python/robotics/robotics/left.jpg'
-    imgr= '/home/pi/examples/python/robotics/robotics/right.jpg'
+    imgl= '/home/pi/examples/python/robotics/robotics/left1.jpg'
+    imgr= '/home/pi/examples/python/robotics/robotics/right1.jpg'
     imageA = cv2.imread(imgl)
     imageB = cv2.imread(imgr)
     imageA = imutils.resize(imageA, width=400)
