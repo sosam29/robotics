@@ -43,6 +43,7 @@ def loop():
         if (distance > D_MIN):
             distance = getSonar()
             print("Distance from object is %d" %(distance))
+            moveit(FWD,True)
             time.sleep(1)
         elif (distance<= D_MIN):
             stop()
@@ -55,24 +56,24 @@ def loop():
                 safeL = checkDirection(LEFT, TURN_ANGLE)
 
                 print("LEFT : %s RIGHT: %s"%(safeR, safeL))
-                time2 = time1 = datetime.datetime.now()
+                time2 = datetime.datetime.now()
                 diff = relativedelta.relativedelta(time2, time1)
                 cum_min += diff.minutes
 #                print("Time in Minutes : %.3f" %(timeinmin))
                 if (TIME_OUT>=cum_min):
                     print("We are stalled")
-                    destroy()
-                    ultradestroy()
-                    exit(1)
+                    # destroy()
+                    # ultradestroy()
+                    # exit(-1)
                 if safeR or safeL:
                     print("Breaking Direction Check and resuming the travel")
                     break
 
-def moveFwd(distance, steps):
-    #if (distance -D_MIN <=0):
-    #   return
-    retval = distance - steps
-    return retval
+# def moveFwd(distance, steps):
+#     #if (distance -D_MIN <=0):
+#     #   return
+#     retval = distance - steps
+#     return retval
  
 def stop():
     ''' stop all movmemnts and stand still
@@ -101,8 +102,8 @@ def moveit(direction, directioncheck):
     ''' we should be checking only the way and not making any progress
         we should be only turning head and whole body
     '''
-    print("motor should turn to direction %s "%(direction))
-    if (direction== RIGHT):
+    print("Moving in direction %s "%(direction))
+    if (direction == RIGHT):
 #        pring("motor should turn right")
         GPIO.output(motorRFPin, GPIO.LOW)
         GPIO.output(motorRRPin, GPIO.HIGH)
@@ -110,19 +111,21 @@ def moveit(direction, directioncheck):
         GPIO.output(motorLRPin, GPIO.LOW)        
         # time.sleep(directioncheck)
         
-    elif (direction== LEFT):
+    elif (direction == LEFT):
         GPIO.output(motorRFPin, GPIO.HIGH)
         GPIO.output(motorRRPin, GPIO.LOW)
         GPIO.output(motorLFPin, GPIO.LOW)
         GPIO.output(motorLRPin, GPIO.HIGH)
         # time.sleep(directioncheck)
 
-    elif(direction== FWD):   # FWD    
+    elif(direction == FWD):   # FWD    
         GPIO.output(motorRFPin, GPIO.HIGH)
         GPIO.output(motorRRPin, GPIO.LOW)
         GPIO.output(motorLFPin, GPIO.HIGH)
         GPIO.output(motorLRPin, GPIO.LOW)
-        # time.sleep(1)
+        time.sleep(1)
+        stop()
+
 
     elif(direction== REV):   # REV    
         GPIO.output(motorRFPin, GPIO.LOW)
@@ -139,18 +142,20 @@ def destroy():
     GPIO.output(motorRFPin, GPIO.LOW) # Right motor fwd
     GPIO.output(motorLRPin, GPIO.LOW) # left motor rev
     GPIO.output(motorRRPin, GPIO.LOW) # right motor rev    
-
     ultradestroy()
-    GPIO.cleanup()
-
+  
 
 if __name__=='__main__':
     setup()
-    ultrasetup()
+    # ultrasetup()
     try:
         loop()
     except KeyboardInterrupt:
         destroy()
+        print("Program interrupted.. Exiting....")
+    finally:
+        # ultradestroy()
+        GPIO.cleanup()
 
     
     

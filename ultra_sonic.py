@@ -64,9 +64,9 @@ def loop():
         time.sleep(1)
 
 def destroy():
-    GPIO.cleanup()  # do we need this?
+#     GPIO.cleanup()  # do we need this?
 #    GPIO.output(trigerPin, GPIO.LOW)
-    print("In destroy() cleaning up")
+    print("In ultrasonic destroy() cleaning up")
     
 
 #    if __name__ =="__main__":
